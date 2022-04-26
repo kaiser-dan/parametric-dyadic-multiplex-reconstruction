@@ -3,23 +3,16 @@
 
 # ===================== IMPORTS =======================
 # Standard library
-import sys
-from itertools import combinations
 from typing import List
 
 # Scientific computing
-import pandas as pd
-import numpy as np
-from scipy.stats import spearmanr as sp
-from scipy.stats import pearsonr as pr
 
 # Network science
-import networkx as nx
 from cdlib.algorithms import louvain
 from cdlib.evaluation import newman_girvan_modularity as modularity
 
 # Miscelleaneous
-from structs.core import MultiplexCore
+from structs.core import NetworkCore
 
 
 # ===================== METADATA ======================
@@ -30,21 +23,19 @@ __credits__ = [
     "Filippo Radicchi",
     "Stephen Jasina",
 ]
-__version__ = "1.1.1"
+__version__ = "1.0.3"
 __maintainer__ = "Daniel Kaiser"
 __email__ = "kaiserd@iu.edu"
 __status__ = "Development"
 
 
 # ===================== CLASS ==========================
-class Multiplex(MultiplexCore):
+class Network(NetworkCore):
     """Class to handle Multiplex data in the context of reconstruction
     experiments."""
     # ~~~ Init and data retrieval ~~~
-    def __init__(self, multiplex_dict=None):
-        super().__init__(multiplex_dict)
-        self.layer_pairs = \
-            list(combinations(range(self.number_of_layers), 2))
+    def __init__(self, edgelist=None):
+        super().__init__()
 
     # ~~~ Representations and statics ~~~
     def __repr__(self):
@@ -63,7 +54,12 @@ class Multiplex(MultiplexCore):
 
         return True
 
-
     # ~~~ Public methods to measure structural indicators ~~~
+    def get_degrees(self):
+        return [deg for _, deg in self.graph.degree()]
+
+    def get_modularity(self):
+        return modularity(self.graph, louvain(self.graph))
+
     def get_entropy(self):
         pass

@@ -36,7 +36,7 @@ __status__ = "Development"
 # ===================== CLASS ==========================
 class NetworkCore:
     """Class to handle single-layer network data."""
-    def __init__(self, edgelist = None):
+    def __init__(self, edgelist=None):
         if edgelist is None:
             raise ValueError("You gotta give me somethin, bro")
 
@@ -58,7 +58,7 @@ class NetworkCore:
         return f"Multiplex class instance pickled at {output_filepath}"
 
     def get_adjacency(self):
-        pass
+        return nx.to_numpy_matrix(self)
 
 
 class MultiplexCore:
@@ -68,22 +68,26 @@ class MultiplexCore:
         if multiplex_dict is None:
             raise ValueError("You gotta give me somethin, bro")
 
+        # Base representations
         self._multiplex_dict = multiplex_dict
-
         self.multiplex = [
-            nx.Graph(edgelist)
+            NetworkCore(edgelist)
             for edgelist in self._multiplex_dict.values()
         ]  # Networkx graph objects for each layer (ordered)
-        self.number_of_nodes, self.total_number_of_nodes = \
-            self._get_number_of_nodes()  # List[int], int
-        self.number_of_edges, self.total_number_of_edges = \
-            self._get_number_of_edges()  # List[int], int
-        self.number_of_components = \
+
+        # Topological object counts
+        self.number_of_layers = len(self._multiplex_dict)
+        self.number_of_nodes, self.number_of_edges, self.node_counts, \
+            self.edge_counts = self.get_node_edge_counts()
+
+        # Topological connectedness
+        self.component_counts = \
             [
-                nx.number_connected_components(layer)
+                nx.number_connected_components(layer.graph)
                 for layer in self.multiplex
             ]
-        self.number_of_layers = len(self._multiplex_dict)  # Convenience variable
+
+        # Alternative representations
         self.aggregate = None, None  # Aggregated network (topology, type)
         self.supraadjacency = None  # Supra-adjacency matrix
 
@@ -139,67 +143,40 @@ class MultiplexCore:
         return True
 
 
-    # ~~~ Private methods to calculate structural measures ~~~
-    def _get_number_of_nodes(self):
-        """Gets number of active nodes per layer and total unique nodes
-        across all layers.
+    # ~~~ Public method to calculate structural measures ~~~
+    def get_node_edge_counts(self):
+        # Find union of all layers
+        composed_ = nx.compose_all([layer.graph for layer in self.multiplex])
 
-        Returns
-        -------
-        List[int]
-            List of number of nodes at layer [index]
-        int
-            Total unique nodes in the multiplex
-        """
-        # Get active node sets across all layers
-        nodes_ = [graph.nodes for graph in self.multiplex]
+        # Get layerwise counts
+        node_counts = [layer.graph.number_of_nodes() for layer in self.multiplex]
+        edge_counts = [layer.graph.number_of_edges() for layer in self.multiplex]
 
-        # Size each layer's active node sets
-        mapping_ = [len(node_) for node_ in nodes_]
-
-        # Union all active node sets and remove duplicates
-        total_ = len(set().union(*nodes_))
-
-        return mapping_, total_
-
-    def _get_number_of_edges(self):
-        """Gets number of active edges per layer and total unique edges
-        across all layers.
-
-        Returns
-        -------
-        List[int]
-            List of number of edges at layer [index]
-        int
-            Total unique edges in the multiplex
-        """
-        # Get active node sets across all layers
-        edges_ = [graph.edges for graph in self.multiplex]
-
-        # Size each layer's active node sets
-        mapping_ = [len(edge_) for edge_ in edges_]
-
-        # Union all active node sets and remove duplicates
-        total_ = len(set().union(*edges_))
-
-        return mapping_, total_
+        # Return in order total nodes, total edges, nodes, edges
+        return (composed_.number_of_nodes(),
+            composed_.number_of_edges(),
+            node_counts,
+            edge_counts
+        )
 
 
     # ~~~ Public methods to get alternative structs ~~~
     def get_supraadjacency(self):
-        N_ = self.total_number_of_nodes
+        N_ = self.number_of_nodes
 
         # Create block matrix of all N_ x N_ identities
         L_ = self.number_of_layers
-        supraadjency = np.tile(np.identity(N_), (L_,L_))
+        supraadjency = np.tile(np.identity(N_), (L_, L_))
 
         # Fill in layer-wise adjacency matrices
-        for idx_, graph in enumerate(self.multiplex):
+        for idx_, network in enumerate(self.multiplex):
+            ## ? May be able to clean this up with nx.to_numpy_array
+            ## ? with additional nodelist argument?
             ## Get each layer's adjacency matrix
             adjacency_ = np.identity(N_)
 
             ## Fill in entries where an edge exists
-            for edge in graph.edges:
+            for edge in network.graph.edges:
                 adjacency_[edge] = 1
 
             ## Determine where in block matrix it belongs

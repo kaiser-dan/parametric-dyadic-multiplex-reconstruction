@@ -10,11 +10,10 @@ represents a more polished, documented form of what was used to
 do the research, however, is functionally equivalent. Metadata,
 then, does not reflect research timeline.
 
-@author Daniel Kaiser. Created on 2022-04-10. Last modified 2022-04-14.
+@author Daniel Kaiser. Created on 2022-04-10. Last modified 2022-04-26.
 """
 # ===================== IMPORTS =======================
 # Standard library
-import sys
 from itertools import combinations
 from typing import List
 
@@ -27,10 +26,10 @@ from scipy.stats import pearsonr as pr
 # Network science
 import networkx as nx
 from cdlib.algorithms import louvain
-from cdlib.evaluation import newman_girvan_modularity as modularity
 
 # Miscelleaneous
 from structs.core import MultiplexCore
+from structs.network import Network
 
 
 # ===================== METADATA ======================
@@ -41,7 +40,7 @@ __credits__ = [
     "Filippo Radicchi",
     "Stephen Jasina",
 ]
-__version__ = "1.1.1"
+__version__ = "1.5.2"
 __maintainer__ = "Daniel Kaiser"
 __email__ = "kaiserd@iu.edu"
 __status__ = "Development"
@@ -56,6 +55,9 @@ class Multiplex(MultiplexCore):
         super().__init__(multiplex_dict)
         self.layer_pairs = \
             list(combinations(range(self.number_of_layers), 2))
+        # Reinitialize multiplex from List[NetworkCore] to List[Network]
+        # to maintain experimental structural measures
+        self.multiplex = [Network(edgelist) for edgelist in multiplex_dict.values()]
 
     # ~~~ Representations and statics ~~~
     def __repr__(self):
@@ -81,20 +83,20 @@ class Multiplex(MultiplexCore):
         ## If forcing common node set, initialize empty degree sequences
         if all_nodes:
             degrees = [
-                [0]*(self.total_number_of_nodes+1)
+                [0]*(self.number_of_nodes+1)
                 for _ in range(self.number_of_layers)
             ]
 
             ## Update degree sequences with active node degrees
             for layer_idx, layer in enumerate(self.multiplex):
-                degrees_ = list(layer.degree())
+                degrees_ = list(layer.graph.degree())
                 for c, degree in enumerate(degrees_):
                     #degrees[layer_idx][degree[0]] = degree[1]
                     degrees[layer_idx][c] = degree[1]
 
         ## If only considering active nodes, retrieve degrees
         else:
-            degrees = [list(dict(layer.degree()).values()) for layer in self.multiplex]
+            degrees = [list(dict(layer.graph.degree()).values()) for layer in self.multiplex]
 
         return degrees
 
@@ -131,9 +133,12 @@ class Multiplex(MultiplexCore):
     def get_node_overlap(self):
         overlap = {}
         for layer_pair in self.layer_pairs:
-            nodes_left = set(self.multiplex[layer_pair[0]].nodes)
-            nodes_right = set(self.multiplex[layer_pair[1]].nodes)
-            jaccardian = len(nodes_left & nodes_right) / len(nodes_left | nodes_right)
+            nodes_ = [
+                set(self.multiplex[idx_].graph.nodes)
+                for idx_ in layer_pair
+            ]
+            jaccardian = len(nodes_[0].intersection(*nodes_)) / \
+                len(set().union(*nodes_))
             overlap[layer_pair] = jaccardian
 
         return overlap
@@ -141,9 +146,12 @@ class Multiplex(MultiplexCore):
     def get_edge_overlap(self):
         overlap = {}
         for layer_pair in self.layer_pairs:
-            nodes_left = set(self.multiplex[layer_pair[0]].nodes)
-            nodes_right = set(self.multiplex[layer_pair[1]].nodes)
-            jaccardian = len(nodes_left & nodes_right) / len(nodes_left | nodes_right)
+            edges_ = [
+                set(self.multiplex[idx_].graph.edges)
+                for idx_ in layer_pair
+            ]
+            jaccardian = len(edges_[0].intersection(*edges_)) / \
+                len(set().union(*edges_))
             overlap[layer_pair] = jaccardian
 
         return overlap
@@ -151,26 +159,16 @@ class Multiplex(MultiplexCore):
     def get_average_degree_ratios(self):
         ratios = {}
         for layer_pair in self.layer_pairs:
-            average_left = np.mean(
-                list(dict(self.multiplex[layer_pair[0]].degree()).values())
-            )
-            average_right = np.mean(
-                list(dict(self.multiplex[layer_pair[1]].degree()).values())
-            )
-            averages = [average_left, average_right]
+            averages = [
+                np.mean(self.multiplex[idx_].get_modularity())
+                for idx_ in layer_pair
+            ]
             ratios[layer_pair] = min(averages) / max(averages)
 
         return ratios
 
     def get_modularities(self):
-        modularities = [
-            max([
-                x for x in modularity(graph,louvain(graph))
-                if x is not None
-            ])
-            for graph in self.multiplex
-        ]
-        return modularities
+        return [network.modularity for network in self.multiplex]
 
     def get_nmis(self):
         nmis = {}
@@ -178,8 +176,8 @@ class Multiplex(MultiplexCore):
             left = nx.Graph()
             right = nx.Graph()
 
-            left_ = self.multiplex[layer_pair[0]]
-            right_ = self.multiplex[layer_pair[1]]
+            left_ = self.multiplex[layer_pair[0]].graph
+            right_ = self.multiplex[layer_pair[1]].graph
 
             common_node_set = tuple(set(left_.nodes) | set(right_.nodes))
             left.add_nodes_from(common_node_set)
@@ -207,9 +205,9 @@ class Multiplex(MultiplexCore):
 
         df = pd.DataFrame({
             "Layer": range(1, self.number_of_layers+1),
-            "ActiveNodeCount": self.number_of_nodes,
-            "ActiveEdgesCount": self.number_of_edges,
-            "ComponentsCount": self.number_of_components,
+            "ActiveNodeCount": self.node_counts,
+            "ActiveEdgesCount": self.edge_counts,
+            "ComponentsCount": self.component_counts,
             "Modularity": self.modularities,
         })
 
