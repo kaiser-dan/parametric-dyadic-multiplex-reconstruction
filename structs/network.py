@@ -35,7 +35,7 @@ class Network(NetworkCore):
     experiments."""
     # ~~~ Init and data retrieval ~~~
     def __init__(self, edgelist=None):
-        super().__init__()
+        super().__init__(edgelist=edgelist)
 
     # ~~~ Representations and statics ~~~
     def __repr__(self):

@@ -9,7 +9,6 @@ min, and max degree, as well as LFR benchmarks.
 import sys
 import os
 import random
-from types import NoneType
 from typing import Union, List
 from itertools import product
 
@@ -44,7 +43,7 @@ __status__ = "Development"
 def sample_scalefree_sequence(
     exponent: float, xmin: float, xmax: float,
     n: int = 1, return_ints: bool = False,
-    seed: Union[int, NoneType] = None) -> List[Union[float, int]]:
+    seed: Union[int, None] = None) -> List[Union[float, int]]:
     """Generates a number sequence of length _n_ that approximately fits
     a scale-free distribution with exponent parameter _exponent_ and
     bounds _xmin_, _xmax_.
@@ -114,7 +113,7 @@ def sample_scalefree_sequence(
 
 def get_expected_degree_graph(
     sequence: List[Union[float, int]], selfloops: bool = True,
-    seed: Union[int, NoneType] = None) -> nx.Graph():
+    seed: Union[int, None] = None) -> nx.Graph():
     """Generates an undirected, unweighted single-layer network from a
     sequence of expected degrees. This procedure is based on a simple
     stub-matching process and does not create any mesoscale structure
@@ -144,7 +143,7 @@ def get_expected_degree_graph(
 
 def get_expected_degree_multiplex(
     sequences: List[List[Union[float, int]]], selfloops: bool = True,
-    seed: Union[int, NoneType] = None) -> Multiplex:
+    seed: Union[int, None] = None) -> Multiplex:
     """Generates an undirected, unweighted multiplex from a list of
     sequences of expected degrees. This procedure is based on a simple
     stub-matching process and does not create any mesoscale structure
@@ -173,9 +172,9 @@ def get_expected_degree_multiplex(
     for idx, sequence in enumerate(sequences):
         multiplex[idx] = get_expected_degree_graph(
             sequence=sequence, selfloops=selfloops, seed=seed
-        )
+        ).edges
 
-    return Multiplex(mutliplex_dict=multiplex)
+    return Multiplex(multiplex_dict=multiplex)
 
 
 def generate_variable_redundant_duplex(

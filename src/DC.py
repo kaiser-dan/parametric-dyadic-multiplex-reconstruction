@@ -15,6 +15,7 @@ import numpy as np
 # Network science
 import networkx as nx
 from cdlib.algorithms import louvain
+from sympy import numer
 
 # Custom
 sys.path.append("..")
@@ -101,22 +102,26 @@ def edge_assignment_probability(edge, layer_idx, degree_sequences, partitions = 
 
     # Calculate likelihood edge originates from layer_idx
     # * Assumes a configuration model likelihood of edge placement within each layer
-    numerator = weights[layer_idx] * \
-        degree_sequences[layer_idx][src] * \
-        degree_sequences[layer_idx][tgt]
-    denominator = np.sum([
-        weights[idx_] * \
-            degree_sequences[idx_][src] * \
-            degree_sequences[idx_][tgt]
-        for idx_ in range(len(degree_sequences))
-    ])
+    try:
+        numerator = weights[layer_idx] * \
+            degree_sequences[layer_idx][src] * \
+            degree_sequences[layer_idx][tgt]
+        denominator = np.sum([
+            weights[idx_] * \
+                degree_sequences[idx_][src] * \
+                degree_sequences[idx_][tgt]
+            for idx_ in range(len(degree_sequences))
+        ])
+    except IndexError:
+        numerator = 0
+        denominator = 1
 
     return numerator / denominator
 
 def estimate_mu(_estimated_multiplex):
     ### Retrieve estimate partitions
     estimated_multiplex_partitions = [
-        louvain(estimated_layer).to_node_community_map()
+        louvain(estimated_layer.graph).to_node_community_map()
         for estimated_layer in _estimated_multiplex.multiplex
     ]
 
@@ -126,13 +131,13 @@ def estimate_mu(_estimated_multiplex):
     for idx, estimated_layer in enumerate(_estimated_multiplex.multiplex):
         #### Check that there is an estimated layer
         #### If completely observed, will cause ZeroDivisionError
-        if len(estimated_layer.edges) == 0:
+        if len(estimated_layer.graph.edges) == 0:
             estimated_mus.append(0)
         else:
             #### Get tuples of partition assignments for end of edges
             #### [ (partition of edge source, partition of edge target) for edges ]
             edge_ends_communities = []
-            for edge in estimated_layer.edges:
+            for edge in estimated_layer.graph.edges:
                 edge_ends_communities.append((
                     estimated_multiplex_partitions[idx][edge[0]][0],
                     estimated_multiplex_partitions[idx][edge[1]][0]
@@ -147,7 +152,7 @@ def estimate_mu(_estimated_multiplex):
             }
 
             #### Estimate community strength as relative size of this restriction
-            mu_ = len(grouped) / estimated_layer.number_of_edges()
+            mu_ = len(grouped) / estimated_layer.number_of_edges
             estimated_mus.append(mu_)
 
     ### Take weighted average of community strengths across layers
@@ -157,7 +162,7 @@ def estimate_mu(_estimated_multiplex):
         mu = sum(
                 [estimated_mus[idx] * known_sizes[idx] for idx in range(len(known_sizes))]
             ) / sum(known_sizes)
-    except ZeroDivisionError:
+    except:  # ! NEED TO CATCH SAFELY
         #raise ValueError("No partial information, division by 0 in estimating mu!")
         mu = 0.5
     finally:

@@ -41,8 +41,8 @@ class NetworkCore:
             raise ValueError("You gotta give me somethin, bro")
 
         self.graph = nx.Graph(edgelist, nodetype=int)
-        self.n = self.graph.number_of_nodes()
-        self.m = self.graph.number_of_edges()
+        self.number_of_nodes = self.graph.number_of_nodes()
+        self.number_of_edges = self.graph.number_of_edges()
 
     def save_edgelist(self, output_filepath: str):
         nx.write_edgelist(self.graph, output_filepath)

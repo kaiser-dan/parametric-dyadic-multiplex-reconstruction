@@ -57,7 +57,7 @@ class Multiplex(MultiplexCore):
             list(combinations(range(self.number_of_layers), 2))
         # Reinitialize multiplex from List[NetworkCore] to List[Network]
         # to maintain experimental structural measures
-        self.multiplex = [Network(edgelist) for edgelist in multiplex_dict.values()]
+        self.multiplex = [Network(edgelist=edgelist) for edgelist in multiplex_dict.values()]
 
     # ~~~ Representations and statics ~~~
     def __repr__(self):
@@ -262,7 +262,7 @@ class Multiplex(MultiplexCore):
                     .format(aggregation_mechanism)
                     )
 
-        return nx.Graph(aggregate_), aggregation_mechanism
+        return Network(aggregate_)
 
 
 class MultiplexCorpus:
