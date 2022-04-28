@@ -6,6 +6,7 @@
 from typing import List
 
 # Scientific computing
+import numpy as np
 
 # Network science
 from cdlib.algorithms import louvain
@@ -36,6 +37,8 @@ class Network(NetworkCore):
     # ~~~ Init and data retrieval ~~~
     def __init__(self, edgelist=None):
         super().__init__(edgelist=edgelist)
+        self.modularity = self.get_modularity()
+        self.heterogeneity = self.get_heterogeneity()
 
     # ~~~ Representations and statics ~~~
     def __repr__(self):
@@ -59,7 +62,17 @@ class Network(NetworkCore):
         return [deg for _, deg in self.graph.degree()]
 
     def get_modularity(self):
-        return modularity(self.graph, louvain(self.graph))
+        return max(
+            [
+                x for x in modularity(self.graph, louvain(self.graph))
+                if x is not None
+            ]
+        )
+
+    def get_heterogeneity(self):
+        degrees = [deg for _, deg in self.graph.degree()]
+        degrees_squared = list(map(np.square, degrees))
+        return np.mean(degrees_squared) / (np.mean(degrees))**2
 
     def get_entropy(self):
         pass

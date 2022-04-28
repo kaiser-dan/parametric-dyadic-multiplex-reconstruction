@@ -158,9 +158,10 @@ class Multiplex(MultiplexCore):
 
     def get_average_degree_ratios(self):
         ratios = {}
+        degrees = self.get_degree_sequences(True)
         for layer_pair in self.layer_pairs:
             averages = [
-                np.mean(self.multiplex[idx_].get_modularity())
+                np.mean(degrees[idx_])
                 for idx_ in layer_pair
             ]
             ratios[layer_pair] = min(averages) / max(averages)
@@ -169,6 +170,9 @@ class Multiplex(MultiplexCore):
 
     def get_modularities(self):
         return [network.modularity for network in self.multiplex]
+
+    def get_heterogeneities(self):
+        return [network.heterogeneity for network in self.multiplex]
 
     def get_nmis(self):
         nmis = {}
@@ -202,6 +206,8 @@ class Multiplex(MultiplexCore):
     def summarize_multiplex_layers(self):
         if not hasattr(self, "modularities"):
             self.modularities = self.get_modularities()
+        if not hasattr(self, "heterogeneities"):
+            self.heterogeneities = self.get_heterogeneities()
 
         df = pd.DataFrame({
             "Layer": range(1, self.number_of_layers+1),
@@ -209,6 +215,7 @@ class Multiplex(MultiplexCore):
             "ActiveEdgesCount": self.edge_counts,
             "ComponentsCount": self.component_counts,
             "Modularity": self.modularities,
+            "Heterogeneity": self.heterogeneities,
         })
 
         return df
