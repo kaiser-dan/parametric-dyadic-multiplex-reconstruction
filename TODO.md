@@ -10,6 +10,5 @@ Last read and understood:
 To-do list in approximate order of importance.
 
 - Add script to reproduce analysis directly
+    - Fix multiplex comprehension with 0 partial information (empty multiplex causes ZDEs)
 - Update docs and README
-- Add performance util
-    - Subgraph of each layer that is correct
