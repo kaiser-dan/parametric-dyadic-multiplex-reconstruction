@@ -73,13 +73,13 @@ def main():
     ## Sweep over gammas
     for idx_, gamma in enumerate(GAMMAS):
         ### Sweep over relative sizes of training set
-        for observation_proportion in np.linspace(0, 0.95, 10):
+        for observation_proportion in np.linspace(0.05, 0.95, 10):
             agg = aggregates[idx_].graph
             multiplex_dict = expected_degree_duplexes[idx_]._multiplex_dict
 
             #### Set up the proportion of information we will actually use
-            observations_ = np.random.choice(range(len(agg.edges)), size=int(observation_proportion*len(agg.edges)))
-            observations = [agg.edges[idx_] for idx_ in observations_]
+            observations_ = list(np.random.choice(list(range(len(agg.edges))), size=int(observation_proportion*len(agg.edges))))
+            observations = [agg.edges[int(idx_)] for idx_ in observations_]
 
             #### Take observed information and form partial multiplex structure
             partial_multiplex_dict = {layer: [] for layer in multiplex_dict}
