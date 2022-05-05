@@ -47,7 +47,7 @@ $(DATA)/celegans/multiplex.edgelist: $(DATA) $(RESULTS)
 
 
 clean:
-	rm -rf __pycache__
+	parallel rm -rf {} ::: $(find . -name "__pycache__")
 	rm -rf $(VENV)
 	if [ -d $(DATA)/arxiv/ ]; then rm -rf $(DATA)/arxiv/; fi
 	if [ -d $(DATA)/celegans/ ]; then rm -rf $(DATA)/celegans/; fi
