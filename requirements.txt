@@ -1,7 +1,0 @@
-sklearn
-numpy
-networkx
-pandas
-seaborn
-matplotlib
-tqdm
