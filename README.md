@@ -2,7 +2,8 @@
 
 This project provides source code for the reconstruction of multiplex networks from partial structural observations. The repository also contains the original scientific analyses developed by the Authors (see below) for the paper
 
-- _In preparation_
+[D. Kaiser, S. Patwardhan, and F. Radicchi, Multiplex Reconstruction with Partial Information, Phys. Rev. E 107, 024309 (2023).](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.107.024309)
+
 
 ## Getting Started
 
