@@ -4,6 +4,10 @@ authors:
 - family-names: "Kaiser"
   given-names: "Daniel"
   orcid: "https://orcid.org/0000-0003-1346-451X"
+- family-names: "Patwardhan"
+  given-names: "Siddharth"
+- family-names: "Radicchi"
+  given-names: "Filippo"
 title: "parametric-dyadic-multiplex-reconstruction"
 version: 1.0.0
 doi:
