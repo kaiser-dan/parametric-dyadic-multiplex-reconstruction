@@ -33,7 +33,7 @@ This will install all necessary packages for you to be able to run the scripts a
 
 ## Usage
 
-We have elected to organize our code around the figures present in the [manuscript](). Various subdirectories under `experiments/` contain Jupyter notebooks titled `figureX.ipynb` (where X is some number 1-5 according to the subdirectory) which contain all relevant code to completely reproduce the experiments from the manuscript. Comments are available in the notebooks to describe source code.
+We have elected to organize our code around the figures present in the [manuscript](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.107.024309). Various subdirectories under `experiments/` contain Jupyter notebooks titled `figureX.ipynb` (where X is some number 1-5 according to the subdirectory) which contain all relevant code to completely reproduce the experiments from the manuscript. Comments are available in the notebooks to describe source code.
 
 
 ## Built With
